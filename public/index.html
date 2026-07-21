@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Socket Chat</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        #message-list {
+            border: 1px solid #ccc;
+            padding: 10px;
+            min-height: 200px;
+            margin-bottom: 10px;
+            list-style: none;
+        }
+
+        #message-input {
+            width: 70%;
+            padding: 8px;
+        }
+
+        #send-button {
+            padding: 8px 12px;
+            margin-left: 8px;
+        }
+    </style>
+</head>
+<body>
+    <h1>chatting</h1>
+    <ul id="message-list"></ul>
+    <input id="message-input" placeholder="Type a message" />
+    <button id="send-button">Send</button>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const messageList = document.getElementById('message-list');
+        const messageInput = document.getElementById('message-input');
+        const sendButton = document.getElementById('send-button');
+
+        function addMessage(message) {
+            const item = document.createElement('li');
+            item.textContent = `${message.sender}: ${message.text}`;
+            messageList.appendChild(item);
+        }
+
+        socket.on('connect', () => {
+            console.log('Connected to server with id:', socket.id);
+        });
+
+        socket.on('history', (messages) => {
+            messages.forEach(addMessage);
+        });
+
+        socket.on('receiveMessage', (message) => {
+            addMessage(message);
+        });
+
+        socket.on('disconnect', () => {
+            console.log('Disconnected from server');
+        });
+
+        function sendMessage() {
+            const text = messageInput.value.trim();
+            if (!text) return;
+
+            socket.emit('sendMessage', text);
+            messageInput.value = '';
+        }
+
+        sendButton.addEventListener('click', sendMessage);
+        messageInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+</body>
+</html>
